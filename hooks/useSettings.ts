@@ -1,70 +1,36 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Settings } from '../types';
-import { DEFAULT_SETTINGS, getSettings, saveSettings } from '../data/storage';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
+import { Id } from '../convex/_generated/dataModel';
 
-interface UseSettingsReturn {
-  settings: Settings;
-  loading: boolean;
-  error: string | null;
-  updateSettings: (updates: Partial<Settings>) => Promise<void>;
-  resetSettings: () => Promise<void>;
-}
+// Default settings for non-authenticated users
+const DEFAULT_SETTINGS = {
+  location: 'United Kingdom',
+  lastFrostDate: new Date(new Date().getFullYear(), 4, 15).toISOString(),
+  firstFrostDate: new Date(new Date().getFullYear(), 9, 15).toISOString(),
+  useManualDates: false,
+};
 
-export function useSettings(): UseSettingsReturn {
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load settings from storage
-  useEffect(() => {
-    async function loadSettings() {
-      try {
-        setLoading(true);
-        setError(null);
-        const storedSettings = await getSettings();
-        setSettings(storedSettings);
-      } catch (err) {
-        setError('Failed to load settings');
-        console.error('Error loading settings:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadSettings();
-  }, []);
-
-  // Update settings
-  const updateSettings = useCallback(
-    async (updates: Partial<Settings>): Promise<void> => {
-      try {
-        const newSettings = { ...settings, ...updates };
-        await saveSettings(newSettings);
-        setSettings(newSettings);
-      } catch (err) {
-        setError('Failed to save settings');
-        throw err;
-      }
-    },
-    [settings]
+export function useSettings(userId: Id<'users'> | undefined) {
+  const settings = useQuery(
+    api.users.getSettings,
+    userId ? { userId } : 'skip'
   );
 
-  // Reset to default settings
-  const resetSettings = useCallback(async (): Promise<void> => {
-    try {
-      await saveSettings(DEFAULT_SETTINGS);
-      setSettings(DEFAULT_SETTINGS);
-    } catch (err) {
-      setError('Failed to reset settings');
-      throw err;
-    }
-  }, []);
+  const updateSettingsMutation = useMutation(api.users.updateSettings);
+
+  const updateSettings = async (updates: {
+    location?: string;
+    lastFrostDate?: string;
+    firstFrostDate?: string;
+    useManualDates?: boolean;
+  }) => {
+    if (!userId) throw new Error('Not authenticated');
+    return updateSettingsMutation({ userId, ...updates });
+  };
 
   return {
-    settings,
-    loading,
-    error,
+    settings: settings ?? DEFAULT_SETTINGS,
+    loading: settings === undefined,
     updateSettings,
-    resetSettings,
   };
 }

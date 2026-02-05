@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { AuthProvider } from '../providers/AuthProvider';
 import { colors } from '../theme';
 
-export default function RootLayout() {
+function RootLayoutNav() {
   return (
     <>
       <StatusBar style="dark" />
@@ -29,6 +30,12 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="(auth)"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="plant/[id]"
           options={{
             title: 'Plant Details',
@@ -47,7 +54,21 @@ export default function RootLayout() {
             title: 'Settings',
           }}
         />
+        <Stack.Screen
+          name="sharing"
+          options={{
+            title: 'Garden Sharing',
+          }}
+        />
       </Stack>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
   );
 }

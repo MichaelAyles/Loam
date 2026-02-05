@@ -5,24 +5,26 @@ A garden planning app for tracking your plants from seed to harvest. Built with 
 ## Features
 
 - **Dashboard** - View your plants and upcoming tasks at a glance
-- **Task System** - Automatic task generation based on plant growth stages (germination, transplant, hardening off, plant out, harvest)
-- **Plant Profiles** - Track individual plants with visual growth timeline and event logging
-- **Add Plant Wizard** - Easy 3-step flow to add new plants from the built-in seed database
-- **UK Optimized** - Default frost dates for UK climate (mid-May last frost, mid-October first frost)
-- **Offline First** - All data stored locally with AsyncStorage
+- **Task System** - Automatic task generation based on plant growth stages
+- **Plant Profiles** - Track individual plants with visual growth timeline
+- **Species Library** - Shared database of plant varieties with growing info
+- **Cloud Sync** - Real-time sync across all your devices
+- **Garden Sharing** - Share your garden with family and friends
+- **UK Optimized** - Default frost dates for UK climate
 
-## Plant Database
+## Species Library
 
-Includes 14 UK-friendly varieties:
-- **Vegetables**: Tomato (Moneymaker, Gardener's Delight), Courgette, Runner Beans (Scarlet Emperor, Painted Lady), Chilli (Jalapeño, Cayenne), Lettuce (Little Gem, Butterhead)
-- **Herbs**: Basil (Genovese, Thai), Coriander, Parsley
-- **Fruits**: Strawberry (Cambridge Favourite)
+Managed species database includes 14+ UK-friendly varieties:
+- **Vegetables**: Tomato, Courgette, Runner Beans, Chilli, Lettuce
+- **Herbs**: Basil, Coriander, Parsley
+- **Fruits**: Strawberry
 
 ## Tech Stack
 
 - **Expo SDK 54** with TypeScript
 - **Expo Router** for file-based navigation
-- **AsyncStorage** for local persistence
+- **Convex** for real-time database and backend
+- **Clerk** for authentication
 - **date-fns** for date manipulation
 
 ## Getting Started
@@ -30,56 +32,103 @@ Includes 14 UK-friendly varieties:
 ### Prerequisites
 
 - Node.js 20+
-- Expo CLI
-- Android Studio (for Android development) or Xcode (for iOS)
+- npm or yarn
+- [Convex account](https://convex.dev)
+- [Clerk account](https://clerk.com)
 
-### Installation
+### 1. Clone and Install
 
 ```bash
-# Install dependencies
+git clone https://github.com/MichaelAyles/Loam.git
+cd Loam
 npm install
+```
 
-# Start the development server
+### 2. Set up Convex
+
+```bash
+# Login to Convex
+npx convex login
+
+# Initialize Convex (creates project)
+npx convex init
+
+# Deploy the backend
+npx convex dev
+```
+
+### 3. Set up Clerk
+
+1. Create a Clerk application at [clerk.com](https://clerk.com)
+2. Enable Email authentication
+3. Get your publishable key from the Clerk dashboard
+4. Set up JWT template for Convex:
+   - Go to JWT Templates in Clerk
+   - Create a new template named "convex"
+   - Use the Convex template
+
+### 4. Configure Environment
+
+Create a `.env` file:
+
+```bash
+cp .env.example .env
+```
+
+Fill in your values:
+```
+EXPO_PUBLIC_CONVEX_URL=<your convex deployment url>
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=<your clerk publishable key>
+CLERK_JWT_ISSUER_DOMAIN=<your clerk jwt issuer>
+```
+
+### 5. Seed the Species Database
+
+```bash
+# In Convex dashboard, run:
+npx convex run species:seedSpecies
+```
+
+### 6. Run the App
+
+```bash
+# Start Convex backend (keep running)
+npx convex dev
+
+# In another terminal, start Expo
 npx expo start
 ```
 
-### Running on Device
-
-**With Expo Go (limited features):**
-```bash
-npx expo start
-# Scan QR code with Expo Go app
-```
-
-**With development build (recommended):**
-```bash
-# Generate native projects
-npx expo prebuild
-
-# Run on Android
-npx expo run:android
-
-# Run on iOS
-npx expo run:ios
-```
+Press `w` for web, or scan QR code with Expo Go.
 
 ## Project Structure
 
 ```
-loam/
 ├── app/                      # Expo Router pages
-│   ├── _layout.tsx           # Root layout
-│   ├── index.tsx             # Dashboard
-│   ├── settings.tsx          # Settings
-│   ├── plant/[id].tsx        # Plant profile
-│   └── add/                  # Add plant wizard
+│   ├── (auth)/               # Auth screens (sign-in, sign-up)
+│   ├── add/                  # Add plant wizard
+│   └── plant/                # Plant details
 ├── components/               # React components
-├── data/                     # Seed database & storage
+├── convex/                   # Convex backend
+│   ├── schema.ts             # Database schema
+│   ├── species.ts            # Species queries/mutations
+│   ├── plants.ts             # Plant queries/mutations
+│   ├── users.ts              # User management
+│   └── sharing.ts            # Garden sharing
 ├── hooks/                    # Custom React hooks
+├── providers/                # React context providers
 ├── theme/                    # Design tokens
 ├── types/                    # TypeScript interfaces
 └── utils/                    # Helper functions
 ```
+
+## Database Schema
+
+- **species** - Shared plant variety library (name, growing times, notes)
+- **users** - User profiles and settings (frost dates, location)
+- **plants** - User's plant instances linked to species
+- **plantEvents** - Growth event log (sowed, germinated, etc.)
+- **gardenShares** - Sharing permissions between users
 
 ## License
 
